@@ -1,7 +1,5 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { auth } from '../config/firebase';
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 
 const Register = () => {
   const [formData, setFormData] = useState({

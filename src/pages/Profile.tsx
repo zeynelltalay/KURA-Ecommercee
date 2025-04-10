@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { UserIcon, MapPinIcon, ShoppingBagIcon, PencilIcon, CheckIcon, XMarkIcon, HomeIcon, CreditCardIcon } from '@heroicons/react/24/outline';
+import { UserIcon, MapPinIcon, ShoppingBagIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../context/AuthContext';
 
 interface ProfileData {

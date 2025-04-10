@@ -1,7 +1,5 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { auth } from '../config/firebase';
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
@@ -131,9 +129,9 @@ const Login = () => {
               </div>
 
               <div className="text-sm">
-                <a href="#" className="font-medium text-purple-600 hover:text-purple-500">
+                <Link to="/forgot-password" className="font-medium text-purple-600 hover:text-purple-500">
                   Şifremi unuttum
-                </a>
+                </Link>
               </div>
             </div>
 

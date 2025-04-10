@@ -24,7 +24,7 @@ interface FormData {
 
 const Checkout = () => {
   const navigate = useNavigate();
-  const { cart, totalItems, clearCart } = useCart();
+  const { cart, clearCart } = useCart();
   
   // Form verilerini boş olarak başlat
   const [formData, setFormData] = useState<FormData>({
