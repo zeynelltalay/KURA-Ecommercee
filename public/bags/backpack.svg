@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="800" height="600" viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
+    <!-- Ana çanta gövdesi -->
+    <rect x="250" y="100" width="300" height="400" rx="20" fill="#4A5568"/>
+    
+    <!-- Çanta detayları -->
+    <rect x="270" y="120" width="260" height="360" rx="15" fill="#2D3748"/>
+    
+    <!-- Ön cep -->
+    <rect x="300" y="250" width="200" height="150" rx="10" fill="#4A5568"/>
+    <rect x="320" y="270" width="160" height="110" rx="8" fill="#2D3748"/>
+    
+    <!-- Çanta askıları -->
+    <path d="M 270,150 Q 200,250 200,400" stroke="#4A5568" stroke-width="30" fill="none"/>
+    <path d="M 530,150 Q 600,250 600,400" stroke="#4A5568" stroke-width="30" fill="none"/>
+    
+    <!-- Üst tutacak -->
+    <path d="M 350,100 Q 400,50 450,100" stroke="#4A5568" stroke-width="20" fill="none"/>
+    
+    <!-- Fermuarlar -->
+    <line x1="400" y1="250" x2="400" y2="400" stroke="#718096" stroke-width="8"/>
+    <circle cx="400" cy="250" r="8" fill="#A0AEC0"/>
+    
+    <!-- Yan cepler -->
+    <rect x="230" y="250" width="40" height="100" rx="5" fill="#2D3748"/>
+    <rect x="530" y="250" width="40" height="100" rx="5" fill="#2D3748"/>
+</svg> 

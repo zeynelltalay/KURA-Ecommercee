@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+  <style>
+    .bag { fill: #4F46E5; }
+  </style>
+  <path class="bag" d="M4,4 L28,4 L28,28 L4,28 Z M8,8 L24,8 L24,24 L8,24 Z" />
+</svg> 

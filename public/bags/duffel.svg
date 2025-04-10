@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">
+  <style>
+    .bag { fill: #8B5CF6; }
+    .detail { fill: #7C3AED; }
+    .highlight { fill: #A78BFA; }
+    .zipper { fill: #4C1D95; }
+  </style>
+  <ellipse cx="200" cy="200" rx="150" ry="100" class="bag" />
+  <ellipse cx="200" cy="200" rx="130" ry="80" class="detail" />
+  <ellipse cx="200" cy="200" rx="110" ry="60" class="highlight" />
+  <path d="M50 200 Q200 150 350 200" stroke="#4C1D95" stroke-width="5" fill="none" class="zipper" />
+  <path d="M50 200 Q200 250 350 200" stroke="#4C1D95" stroke-width="5" fill="none" class="zipper" />
+</svg> 

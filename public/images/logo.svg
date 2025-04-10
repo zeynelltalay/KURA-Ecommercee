@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="50" viewBox="0 0 200 50">
+  <style>
+    .text { font-family: Arial, sans-serif; font-weight: bold; }
+    .bag { fill: #4F46E5; }
+    .text-primary { fill: #1F2937; }
+    .text-secondary { fill: #6B7280; }
+  </style>
+  <g transform="translate(10, 35)">
+    <path class="bag" d="M0,0 L15,0 L15,15 L0,15 Z M5,5 L10,5 L10,10 L5,10 Z" />
+    <text x="25" y="0" class="text text-primary" font-size="16">Çanta</text>
+    <text x="25" y="20" class="text text-secondary" font-size="12">Mağazası</text>
+  </g>
+</svg> 

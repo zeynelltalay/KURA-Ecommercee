@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">
+  <style>
+    .bag { fill: #4F46E5; }
+    .detail { fill: #3730A3; }
+    .highlight { fill: #818CF8; }
+    .strap { fill: #4F46E5; }
+  </style>
+  <path d="M100,150 C100,100 150,50 200,50 C250,50 300,100 300,150 L300,300 C300,350 250,400 200,400 C150,400 100,350 100,300 Z" class="bag" />
+  <path d="M120,170 C120,130 160,90 200,90 C240,90 280,130 280,170 L280,280 C280,320 240,360 200,360 C160,360 120,320 120,280 Z" class="detail" />
+  <circle cx="200" cy="120" r="20" class="highlight" />
+  <path d="M200,50 C200,50 200,0 200,0" stroke="#4F46E5" stroke-width="20" fill="none" />
+  <path d="M200,400 C200,400 200,450 200,450" stroke="#4F46E5" stroke-width="20" fill="none" />
+</svg> 
