@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { doc, getDoc, collection, addDoc, query, where, orderBy, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc, collection, addDoc, query, where, orderBy, onSnapshot, Timestamp, deleteDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import ImageMagnifier from '../components/ImageMagnifier';
+import { TrashIcon } from '@heroicons/react/24/outline';
 
 interface Comment {
   id: string;
@@ -12,7 +13,7 @@ interface Comment {
   rating: number;
   userId: string;
   userName: string;
-  createdAt: Date;
+  createdAt: Timestamp;
   productId: string;
 }
 
@@ -34,17 +35,16 @@ const ProductDetail: React.FC = () => {
   const [rating, setRating] = useState(5);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const { currentUser, isAuthenticated } = useAuth();
+  const { currentUser, isAuthenticated, isAdmin } = useAuth();
   const [quantity, setQuantity] = useState(1);
   const { addToCart } = useCart();
   const [addedToCart, setAddedToCart] = useState(false);
-  const [isZoomed, setIsZoomed] = useState(false);
 
   // Ürün bilgilerini getir
   useEffect(() => {
     const fetchProduct = async () => {
+      if (!id) return;
       try {
-        if (!id) return;
         const docRef = doc(db, 'products', id);
         const docSnap = await getDoc(docRef);
         
@@ -54,6 +54,7 @@ const ProductDetail: React.FC = () => {
           setError('Ürün bulunamadı');
         }
       } catch (err) {
+        console.error('Ürün yükleme hatası:', err);
         setError('Ürün yüklenirken bir hata oluştu');
       } finally {
         setLoading(false);
@@ -67,20 +68,27 @@ const ProductDetail: React.FC = () => {
   useEffect(() => {
     if (!id) return;
 
+    console.log('Yorumlar yükleniyor...');
     const q = query(
       collection(db, 'comments'),
       where('productId', '==', id),
       orderBy('createdAt', 'desc')
     );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const commentsList = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt?.toDate()
-      })) as Comment[];
-      setComments(commentsList);
-    });
+    const unsubscribe = onSnapshot(q, 
+      (snapshot) => {
+        const commentsList = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as Comment[];
+        console.log('Yüklenen yorumlar:', commentsList);
+        setComments(commentsList);
+      },
+      (error) => {
+        console.error('Yorum yükleme hatası:', error);
+        setError('Yorumlar yüklenirken bir hata oluştu');
+      }
+    );
 
     return () => unsubscribe();
   }, [id]);
@@ -88,7 +96,7 @@ const ProductDetail: React.FC = () => {
   const handleSubmitComment = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !currentUser) {
       setError('Yorum yapmak için giriş yapmalısınız');
       return;
     }
@@ -99,19 +107,22 @@ const ProductDetail: React.FC = () => {
     }
 
     try {
-      await addDoc(collection(db, 'comments'), {
+      const commentData = {
         productId: id,
         text: newComment,
         rating,
-        userId: currentUser?.uid,
-        userName: currentUser?.displayName || currentUser?.email?.split('@')[0],
-        createdAt: new Date()
-      });
+        userId: currentUser.uid,
+        userName: currentUser.displayName || currentUser.email?.split('@')[0] || 'Anonim',
+        createdAt: Timestamp.now()
+      };
 
+      await addDoc(collection(db, 'comments'), commentData);
+      console.log('Yorum başarıyla eklendi');
       setNewComment('');
       setRating(5);
       setError('');
     } catch (err) {
+      console.error('Yorum ekleme hatası:', err);
       setError('Yorum eklenirken bir hata oluştu');
     }
   };
@@ -126,6 +137,22 @@ const ProductDetail: React.FC = () => {
       }, quantity);
       setAddedToCart(true);
       setTimeout(() => setAddedToCart(false), 2000);
+    }
+  };
+
+  // Yorum silme fonksiyonu
+  const handleDeleteComment = async (commentId: string) => {
+    if (!isAdmin) {
+      console.log('Silme yetkisi yok');
+      return;
+    }
+
+    try {
+      await deleteDoc(doc(db, 'comments', commentId));
+      console.log('Yorum başarıyla silindi');
+    } catch (err) {
+      console.error('Yorum silme hatası:', err);
+      setError('Yorum silinirken bir hata oluştu');
     }
   };
 
@@ -248,97 +275,108 @@ const ProductDetail: React.FC = () => {
             </div>
           </div>
 
-          {/* Yorum Formu */}
-          {isAuthenticated ? (
-            <form onSubmit={handleSubmitComment} className="mt-8 border-t border-gray-200 pt-8">
-              <div>
-                <h3 className="text-lg font-medium text-gray-900">Yorum Yap</h3>
-                <div className="mt-4">
-                  <textarea
-                    rows={4}
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    className="shadow-sm focus:ring-purple-500 focus:border-purple-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                    placeholder="Bu ürün hakkında ne düşünüyorsunuz?"
-                  />
-                </div>
-                <div className="mt-4">
-                  <label className="text-sm text-gray-700">Puan</label>
-                  <select
-                    value={rating}
-                    onChange={(e) => setRating(Number(e.target.value))}
-                    className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm rounded-md"
-                  >
-                    {[5, 4, 3, 2, 1].map((num) => (
-                      <option key={num} value={num}>
-                        {num} Yıldız
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="mt-4">
+          {/* Yorumlar Bölümü */}
+          <div className="mt-12 bg-white rounded-lg shadow-lg p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-gray-900">Yorumlar</h2>
+              {isAdmin && (
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800">
+                  Admin Modu
+                </span>
+              )}
+            </div>
+
+            {/* Yorum Formu */}
+            {isAuthenticated ? (
+              <form onSubmit={handleSubmitComment} className="mb-8">
+                <div className="space-y-4">
+                  <div>
+                    <label htmlFor="rating" className="block text-sm font-medium text-gray-700">
+                      Puanlama
+                    </label>
+                    <div className="flex items-center space-x-2 mt-1">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          type="button"
+                          onClick={() => setRating(star)}
+                          className={`text-2xl ${
+                            star <= rating ? 'text-yellow-400' : 'text-gray-300'
+                          }`}
+                        >
+                          ★
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <label htmlFor="comment" className="block text-sm font-medium text-gray-700">
+                      Yorumunuz
+                    </label>
+                    <textarea
+                      id="comment"
+                      rows={4}
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-purple-500 focus:border-purple-500"
+                      placeholder="Ürün hakkında düşüncelerinizi paylaşın..."
+                    />
+                  </div>
                   <button
                     type="submit"
-                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+                    className="w-full bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
                   >
                     Yorum Yap
                   </button>
                 </div>
+              </form>
+            ) : (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 mb-8">
+                <p className="text-yellow-700">
+                  Yorum yapmak için lütfen giriş yapın.
+                </p>
               </div>
-            </form>
-          ) : (
-            <div className="mt-8 border-t border-gray-200 pt-8">
-              <p className="text-sm text-gray-500">
-                Yorum yapmak için lütfen{' '}
-                <a href="/login" className="text-purple-600 hover:text-purple-500">
-                  giriş yapın
-                </a>
-              </p>
-            </div>
-          )}
+            )}
 
-          {/* Yorumlar Listesi */}
-          <div className="mt-8 border-t border-gray-200 pt-8">
-            <h3 className="text-lg font-medium text-gray-900">Yorumlar</h3>
-            <div className="mt-6 space-y-6">
-              {comments.length === 0 ? (
-                <p className="text-sm text-gray-500">Henüz yorum yapılmamış</p>
-              ) : (
-                comments.map((comment) => (
-                  <div key={comment.id} className="border-b border-gray-200 pb-6">
-                    <div className="flex items-center">
-                      <div className="flex-1">
-                        <h4 className="text-sm font-bold text-gray-900">{comment.userName}</h4>
-                        <div className="mt-1 flex items-center">
-                          {[...Array(5)].map((_, index) => (
-                            <svg
-                              key={index}
-                              className={`h-5 w-5 ${
-                                index < comment.rating ? 'text-yellow-400' : 'text-gray-300'
-                              }`}
-                              fill="currentColor"
-                              viewBox="0 0 20 20"
-                            >
-                              <path
-                                fillRule="evenodd"
-                                d="M10 15.585l-7.07 4.267 1.857-7.819L0 7.383l7.714-.964L10 0l2.286 6.42 7.714.964-4.787 4.65 1.857 7.819z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                          ))}
-                        </div>
+            {/* Yorumlar Listesi */}
+            <div className="space-y-6">
+              {comments.map((comment) => (
+                <div key={comment.id} className="border-b border-gray-200 pb-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center space-x-2">
+                      <span className="font-medium text-gray-900">
+                        {comment.userName}
+                      </span>
+                      <div className="flex text-yellow-400">
+                        {[...Array(comment.rating)].map((_, i) => (
+                          <span key={i}>★</span>
+                        ))}
                       </div>
-                      <p className="text-sm text-gray-500">
-                        {new Intl.DateTimeFormat('tr-TR', {
-                          day: 'numeric',
-                          month: 'long',
-                          year: 'numeric'
-                        }).format(comment.createdAt)}
-                      </p>
                     </div>
-                    <p className="mt-4 text-sm text-gray-600">{comment.text}</p>
+                    <div className="flex items-center space-x-4">
+                      <span className="text-sm text-gray-500">
+                        {comment.createdAt instanceof Timestamp 
+                          ? comment.createdAt.toDate().toLocaleDateString('tr-TR')
+                          : new Date().toLocaleDateString('tr-TR')}
+                      </span>
+                      {isAdmin && (
+                        <button
+                          onClick={() => handleDeleteComment(comment.id)}
+                          className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-full transition-colors duration-200"
+                          title="Yorumu sil"
+                        >
+                          <TrashIcon className="h-5 w-5" />
+                        </button>
+                      )}
+                    </div>
                   </div>
-                ))
+                  <p className="text-gray-700">{comment.text}</p>
+                </div>
+              ))}
+              {comments.length === 0 && (
+                <p className="text-gray-500 text-center">
+                  Henüz yorum yapılmamış. İlk yorumu siz yapın!
+                </p>
               )}
             </div>
           </div>
