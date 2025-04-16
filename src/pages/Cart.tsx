@@ -1,111 +1,130 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { TrashIcon } from '@heroicons/react/24/outline';
 
+interface CartItem {
+  id: string;
+  name: string;
+  price: number;
+  imageUrl: string;
+  quantity: number;
+}
+
 const Cart: React.FC = () => {
-  const { items, removeFromCart, updateQuantity, totalItems, totalPrice } = useCart();
+  const { items, removeFromCart, updateQuantity, totalPrice } = useCart();
+  const navigate = useNavigate();
+
+  const handleProceedToCheckout = () => {
+    console.log('Ödemeye geç butonuna tıklandı'); // Debug için log
+    navigate('/checkout');
+  };
 
   if (items.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-100 py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h2 className="text-3xl font-extrabold text-gray-900 mb-4">Sepetiniz Boş</h2>
-            <p className="text-lg text-gray-600 mb-8">
-              Sepetinizde henüz ürün bulunmuyor.
-            </p>
-            <Link
-              to="/shop"
-              className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700"
-            >
-              Alışverişe Başla
-            </Link>
-          </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="text-center">
+          <h2 className="text-2xl font-semibold text-gray-900">Sepetiniz boş</h2>
+          <p className="mt-2 text-gray-600">
+            Alışverişe başlamak için{' '}
+            <Link to="/shop" className="text-purple-600 hover:text-purple-500">
+              mağazayı
+            </Link>{' '}
+            ziyaret edin.
+          </p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 py-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 className="text-3xl font-extrabold text-gray-900 mb-8">Sepetim ({totalItems} ürün)</h2>
-        
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <h1 className="text-3xl font-bold text-gray-900 mb-8">Sepetim</h1>
+
+      <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+        <div className="p-6">
+          {/* Sepet Ürünleri */}
+          <div className="divide-y divide-gray-200">
             {items.map((item) => (
-              <div
-                key={item.id}
-                className="bg-white rounded-lg shadow-lg p-6 mb-4 flex flex-col md:flex-row items-center"
-              >
+              <div key={item.id} className="py-6 flex items-center">
                 <img
-                  src={item.image}
+                  src={item.imageUrl}
                   alt={item.name}
-                  className="w-32 h-32 object-cover rounded-lg mb-4 md:mb-0 md:mr-6"
+                  className="w-24 h-24 object-cover rounded"
                 />
-                <div className="flex-1">
-                  <h3 className="text-lg font-medium text-gray-900">{item.name}</h3>
-                  <p className="text-gray-500 mt-1">{item.description}</p>
-                  <div className="mt-4 flex items-center justify-between">
-                    <div className="flex items-center">
+                
+                <div className="ml-4 flex-1">
+                  <h3 className="text-lg font-medium text-gray-900">
+                    {item.name}
+                  </h3>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Birim Fiyat: {item.price.toLocaleString('tr-TR')} ₺
+                  </p>
+                  
+                  <div className="mt-2 flex items-center space-x-4">
+                    <div className="flex items-center border border-gray-300 rounded">
                       <button
                         onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                        className="text-gray-500 hover:text-purple-600"
+                        className="px-3 py-1 text-gray-600 hover:bg-gray-100"
                       >
                         -
                       </button>
-                      <span className="mx-4 text-gray-700">{item.quantity}</span>
+                      <span className="px-4 py-1 border-x border-gray-300">
+                        {item.quantity}
+                      </span>
                       <button
                         onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                        className="text-gray-500 hover:text-purple-600"
+                        className="px-3 py-1 text-gray-600 hover:bg-gray-100"
                       >
                         +
                       </button>
                     </div>
-                    <div className="flex items-center">
-                      <span className="text-lg font-medium text-gray-900 mr-4">
-                        {(item.price * item.quantity).toFixed(2)} TL
-                      </span>
-                      <button
-                        onClick={() => removeFromCart(item.id)}
-                        className="text-red-500 hover:text-red-700"
-                      >
-                        <TrashIcon className="h-5 w-5" />
-                      </button>
-                    </div>
+                    
+                    <button
+                      onClick={() => removeFromCart(item.id)}
+                      className="text-red-600 hover:text-red-500"
+                    >
+                      <TrashIcon className="h-5 w-5" />
+                    </button>
                   </div>
+                </div>
+                
+                <div className="ml-4">
+                  <p className="text-lg font-medium text-gray-900">
+                    {(item.price * item.quantity).toLocaleString('tr-TR')} ₺
+                  </p>
                 </div>
               </div>
             ))}
           </div>
 
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Sipariş Özeti</h3>
-              <div className="border-t border-gray-200 pt-4">
-                <div className="flex justify-between mb-2">
-                  <span className="text-gray-600">Ara Toplam</span>
-                  <span className="text-gray-900">{totalPrice.toFixed(2)} TL</span>
-                </div>
-                <div className="flex justify-between mb-2">
-                  <span className="text-gray-600">Kargo</span>
-                  <span className="text-gray-900">Ücretsiz</span>
-                </div>
-                <div className="border-t border-gray-200 pt-4 mt-4">
-                  <div className="flex justify-between">
-                    <span className="text-lg font-medium text-gray-900">Toplam</span>
-                    <span className="text-lg font-medium text-purple-600">{totalPrice.toFixed(2)} TL</span>
-                  </div>
-                </div>
-                <Link
-                  to="/checkout"
-                  className="mt-6 w-full bg-purple-600 text-white py-3 px-4 rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition-colors text-center block"
-                >
-                  Siparişi Tamamla
-                </Link>
-              </div>
+          {/* Toplam */}
+          <div className="mt-8 border-t border-gray-200 pt-8">
+            <div className="flex justify-between items-center">
+              <span className="text-xl font-medium text-gray-900">Toplam</span>
+              <span className="text-2xl font-bold text-purple-600">
+                {totalPrice.toLocaleString('tr-TR')} ₺
+              </span>
             </div>
+
+            <Link 
+              to="/checkout"
+              className="mt-8 w-full bg-purple-600 text-white py-3 px-4 rounded-md hover:bg-purple-700 transition-colors duration-200 flex items-center justify-center space-x-2"
+            >
+              <span>Ödemeye Geç</span>
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                className="h-5 w-5" 
+                viewBox="0 0 20 20" 
+                fill="currentColor"
+              >
+                <path 
+                  fillRule="evenodd" 
+                  d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" 
+                  clipRule="evenodd" 
+                />
+              </svg>
+            </Link>
           </div>
         </div>
       </div>

@@ -15,6 +15,10 @@ import { AuthProvider } from './context/AuthContext';
 import Checkout from './pages/Checkout';
 import OrderSuccess from './pages/OrderSuccess';
 import Footer from './components/Footer';
+import ForgotPassword from './pages/ForgotPassword';
+import ProductDetail from './pages/ProductDetail';
+import AdminPanel from './pages/AdminPanel';
+import UserManagement from './pages/UserManagement';
 
 function App() {
   return (
@@ -36,6 +40,10 @@ function App() {
                 <Route path="/cart" element={<Cart />} />
                 <Route path="/checkout" element={<Checkout />} />
                 <Route path="/order-success" element={<OrderSuccess />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/product/:id" element={<ProductDetail />} />
+                <Route path="/admin" element={<AdminPanel />} />
+                <Route path="/admin/users" element={<UserManagement />} />
               </Routes>
             </main>
             <Footer />

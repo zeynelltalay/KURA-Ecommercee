@@ -1,58 +1,47 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [formData, setFormData] = useState({
+    email: '',
+    password: ''
+  });
   const [error, setError] = useState('');
-  const navigate = useNavigate();
-  const { login } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const { login, signInWithGoogle } = useAuth();
 
-  const handleGoogleSignIn = async () => {
-    try {
-      // Basit bir yaklaşım: Google ile giriş yapmadan önce kullanıcıyı kontrol edelim
-      // Bu, Firebase yapılandırması olmadan da çalışmasını sağlar
-      const mockGoogleEmail = 'google@example.com';
-      
-      // Check if user exists in our local storage
-      const existingUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
-      const userExists = existingUsers.some((u: any) => u.email === mockGoogleEmail);
-
-      if (!userExists) {
-        setError('Bu Google hesabı ile kayıtlı kullanıcı bulunamadı. Lütfen önce üye olun.');
-        return;
-      }
-
-      // Başarılı giriş mesajı göster
-      alert('Google hesabınızla başarıyla giriş yaptınız!');
-      login('google-token'); // Token'ı set et
-      navigate('/');
-    } catch (err) {
-      console.error('Google sign-in error:', err);
-      setError('Google ile giriş yapılırken bir hata oluştu. Lütfen tekrar deneyin.');
-    }
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value.trim()
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
 
     try {
-      // Check if user exists (this should be replaced with actual backend check)
-      const existingUsers = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
-      const user = existingUsers.find((u: any) => u.email === email && u.password === password);
+      await login(formData.email, formData.password);
+    } catch (err: any) {
+      setError(err.message || 'Giriş yapılırken bir hata oluştu');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      if (!user) {
-        setError('Geçersiz e-posta veya şifre');
-        return;
-      }
-
-      // Başarılı giriş durumunda token'ı set et
-      login('user-token');
-      navigate('/');
-    } catch (err) {
-      setError('Giriş yapılırken bir hata oluştu. Lütfen tekrar deneyin.');
+  const handleGoogleSignIn = async () => {
+    try {
+      setError('');
+      setLoading(true);
+      await signInWithGoogle();
+    } catch (err: any) {
+      setError(err.message || 'Google ile giriş yapılırken bir hata oluştu');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -62,23 +51,17 @@ const Login = () => {
         <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
           Hesabınıza giriş yapın
         </h2>
-        <p className="mt-2 text-center text-sm text-gray-600">
-          Hesabınız yok mu?{' '}
-          <Link to="/register" className="font-medium text-purple-600 hover:text-purple-500">
-            Üye olun
-          </Link>
-        </p>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            {error && (
-              <div className="bg-red-50 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-                <span className="block sm:inline">{error}</span>
-              </div>
-            )}
+          {error && (
+            <div className="bg-red-50 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+              <span className="block sm:inline">{error}</span>
+            </div>
+          )}
 
+          <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
                 E-posta adresi
@@ -90,8 +73,8 @@ const Login = () => {
                   type="email"
                   autoComplete="email"
                   required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  value={formData.email}
+                  onChange={handleChange}
                   className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
                 />
               </div>
@@ -108,8 +91,8 @@ const Login = () => {
                   type="password"
                   autoComplete="current-password"
                   required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  value={formData.password}
+                  onChange={handleChange}
                   className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
                 />
               </div>
@@ -129,8 +112,11 @@ const Login = () => {
               </div>
 
               <div className="text-sm">
-                <Link to="/forgot-password" className="font-medium text-purple-600 hover:text-purple-500">
-                  Şifremi unuttum
+                <Link
+                  to="/forgot-password"
+                  className="font-medium text-purple-600 hover:text-purple-500"
+                >
+                  Şifrenizi mi unuttunuz?
                 </Link>
               </div>
             </div>
@@ -138,9 +124,12 @@ const Login = () => {
             <div>
               <button
                 type="submit"
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+                disabled={loading}
+                className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 ${
+                  loading ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
               >
-                Giriş Yap
+                {loading ? 'Giriş yapılıyor...' : 'E-posta ile Giriş Yap'}
               </button>
             </div>
           </form>
@@ -151,18 +140,33 @@ const Login = () => {
                 <div className="w-full border-t border-gray-300" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">Veya</span>
+                <span className="px-2 bg-white text-gray-500">
+                  Veya
+                </span>
               </div>
             </div>
 
             <div className="mt-6">
               <button
-                type="button"
                 onClick={handleGoogleSignIn}
-                className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+                disabled={loading}
+                className="w-full flex justify-center items-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
               >
-                Google ile giriş yap
+                <img 
+                  src="https://www.google.com/favicon.ico" 
+                  alt="Google" 
+                  className="w-5 h-5 mr-2"
+                />
+                Google ile Giriş Yap
               </button>
+            </div>
+
+            <div className="mt-6">
+              <div className="text-sm text-center">
+                <Link to="/register" className="font-medium text-purple-600 hover:text-purple-500">
+                  Hesabınız yok mu? Kayıt olun
+                </Link>
+              </div>
             </div>
           </div>
         </div>
